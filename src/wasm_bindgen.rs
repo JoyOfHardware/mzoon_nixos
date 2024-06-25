@@ -80,7 +80,7 @@ pub async fn build_with_wasm_bindgen(
         format!("{target_path}{SEP}wasm32-unknown-unknown{SEP}{target_profile_folder}{SEP}{crate_name}.wasm");
     args.push(wasm_path.as_ref());
 
-    Command::new("frontend/wasm-bindgen")
+    Command::new("wasm-bindgen")
         .args(&args)
         .status()
         .await

@@ -12,7 +12,7 @@ use tar::Archive;
 use tokio::process::Command;
 
 const VERSION: &str = "116";
-static WASM_OPT_PATH: &str = "frontend/binaryen/bin/wasm-opt";
+static WASM_OPT_PATH: &str = "wasm-opt";
 
 // -- public --
 
