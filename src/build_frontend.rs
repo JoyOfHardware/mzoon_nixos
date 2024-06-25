@@ -30,12 +30,15 @@ pub async fn build_frontend(
     compilation_killer: Option<watch::Receiver<()>>,
 ) {
     println!("Building frontend...");
+    println!("1");
 
     let build_id = Uuid::new_v4().as_u128();
     env::set_var("FRONTEND_BUILD_ID", build_id.to_string());
+    println!("2");
 
     let web_workers = web_worker_workspace_members()?;
 
+    println!("3");
     compile_with_cargo(
         build_mode,
         "frontend",
@@ -43,6 +46,7 @@ pub async fn build_frontend(
         compilation_killer.clone(),
     )
     .await?;
+    println!("4");
     for WorkspaceMember { name, .. } in &web_workers {
         compile_with_cargo(
             build_mode,
@@ -52,6 +56,7 @@ pub async fn build_frontend(
         )
         .await?;
     }
+    println!("5");
 
     remove_pkg(Path::new("frontend/pkg")).await?;
     for WorkspaceMember { path, .. } in &web_workers {
@@ -144,36 +149,36 @@ async fn compile_with_cargo(
     // because `cargo +<toolchain>` is broken in Rustup on Windows.
     // https://github.com/rust-lang/rustup/issues/3036
     // Rewrite it back to `cargo +<toolchain>` once the issue is fixed.
-    let mut args = vec!["run"];
+    let mut args = vec![];
 
     // @TODO `args: Vec<Cow<str>>`? or a macro/builder to build the `Vec`?
     #[allow(unused_assignments)]
     let mut active_toolchain = String::new();
 
-    if frontend_multithreading {
-        args.push("nightly")
-    } else {
-        // @TODO Rustup requires to select a toolchain but we don't want to force `stable`.
-        // Also `default/active` or `""` is not a valid value (anymore?) - https://github.com/rust-lang/rustup/issues/3304.
-        // So we need to find out the default/active toolchain before calling `rustup run`.
-        let active_toolchain_stdout = Command::new("rustup")
-            .args(["show", "active-toolchain"])
-            .output()
-            .await?
-            .stdout;
-        let active_toolchain_stdout = str::from_utf8(&active_toolchain_stdout)?;
-        // `active_toolchain_stdout` examples:
-        // - 'stable-x86_64-pc-windows-msvc (environment override by RUSTUP_TOOLCHAIN)'
-        // - 'stable-x86_64-pc-windows-msvc (default)'
-        active_toolchain = active_toolchain_stdout
-            .split_once(' ')
-            .map(|(toolchain, _)| toolchain)
-            .unwrap_or(active_toolchain_stdout)
-            .to_owned();
-        args.push(&active_toolchain);
-    }
+    // if frontend_multithreading {
+    //     args.push("nightly")
+    // } else {
+    //     // @TODO Rustup requires to select a toolchain but we don't want to force `stable`.
+    //     // Also `default/active` or `""` is not a valid value (anymore?) - https://github.com/rust-lang/rustup/issues/3304.
+    //     // So we need to find out the default/active toolchain before calling `rustup run`.
+    //     let active_toolchain_stdout = Command::new("rustup")
+    //         .args(["show", "active-toolchain"])
+    //         .output()
+    //         .await?
+    //         .stdout;
+    //     let active_toolchain_stdout = str::from_utf8(&active_toolchain_stdout)?;
+    //     // `active_toolchain_stdout` examples:
+    //     // - 'stable-x86_64-pc-windows-msvc (environment override by RUSTUP_TOOLCHAIN)'
+    //     // - 'stable-x86_64-pc-windows-msvc (default)'
+    //     active_toolchain = active_toolchain_stdout
+    //         .split_once(' ')
+    //         .map(|(toolchain, _)| toolchain)
+    //         .unwrap_or(active_toolchain_stdout)
+    //         .to_owned();
+    //     args.push(&active_toolchain);
+    // }
     args.extend(vec![
-        "cargo",
+        // "cargo",
         "build",
         "--bin",
         &bin_crate,
@@ -239,11 +244,15 @@ async fn compile_with_cargo(
         })
         .chain(envs);
 
-    let mut process = Command::new("rustup")
-        .args(&args)
-        .envs(envs)
+    let mut cmd = Command::new("cargo");
+    cmd.args(&args);
+    cmd.envs(envs);
+// 
+    dbg!(&cmd);
+    
+    let mut process = cmd
         .spawn()
-        .context("Failed to start {bin_crate} compilation")?;
+        .context("Failed to start compilation")?;
 
     let compilation_killer_or_pending = async move {
         if let Some(mut compilation_killer) = compilation_killer {

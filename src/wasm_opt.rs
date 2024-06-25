@@ -40,24 +40,7 @@ pub async fn check_or_install_wasm_opt() {
             compile_error!("wasm-opt pre-compiled binary hasn't been found for the target platform '{TARGET}'");
         }
     }
-    const DOWNLOAD_URL: &str = formatcp!(
-        "https://github.com/WebAssembly/binaryen/releases/download/version_{VERSION}/binaryen-version_{VERSION}-{ARCHIVE_PLATFORM}.tar.gz",
-    );
 
-    println!("Downloading & Installing wasm-opt {VERSION} ...");
-    println!(
-        "Pre-compiled wasm-opt binary '{ARCHIVE_PLATFORM}' will be used for the target platform '{TARGET}'"
-    );
-
-    download(DOWNLOAD_URL)
-        .await
-        .context(formatcp!(
-            "Failed to download wasm-opt from the url '{DOWNLOAD_URL}'"
-        ))?
-        .apply(unpack_wasm_opt)
-        .await
-        .context("Failed to unpack wasm-opt")?;
-    println!("wasm-opt installed");
 }
 
 #[throws]

@@ -47,24 +47,6 @@ pub async fn check_or_install_wasm_bindgen() {
             compile_error!("wasm-bindgen pre-compiled binary hasn't been found for the target platform '{TARGET}'");
         }
     }
-    const DOWNLOAD_URL: &str = formatcp!(
-        "https://github.com/rustwasm/wasm-bindgen/releases/download/{VERSION}/wasm-bindgen-{VERSION}-{NEAREST_TARGET}.tar.gz"
-    );
-
-    println!("Downloading & Installing wasm-bindgen {VERSION} ...");
-    if TARGET != NEAREST_TARGET {
-        println!(
-            "Pre-compiled wasm-bindgen binary '{NEAREST_TARGET}' will be used for the target platform '{TARGET}'"
-        );
-    }
-    download(DOWNLOAD_URL)
-        .await
-        .context(formatcp!(
-            "Failed to download wasm-bindgen from the url '{DOWNLOAD_URL}'"
-        ))?
-        .apply(unpack_wasm_bindgen)
-        .context("Failed to unpack wasm-bindgen")?;
-    println!("wasm-bindgen installed");
 }
 
 // https://rustwasm.github.io/wasm-bindgen/reference/cli.html
