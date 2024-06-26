@@ -19,9 +19,6 @@ pkgs.callPackage (
 
       cargoDeps = rustPlatform.importCargoLock {
         lockFile = ./Cargo.lock;
-      #   outputHashes = {
-      #    "lexical-6.0.0" = "sha256-hL3o3fbdfFqFxVwvim1VFyCIJ7VEs7sQjStsfi4oa8U=";
-      #  };
       };
 
       src = ./.;
