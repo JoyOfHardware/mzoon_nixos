@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {}, src ? ./. }:
 
 pkgs.callPackage (
   {
@@ -21,7 +21,7 @@ pkgs.callPackage (
         lockFile = ./Cargo.lock;
       };
 
-      src = ./.;
+      src = src;
 
       doCheck = true;
 
