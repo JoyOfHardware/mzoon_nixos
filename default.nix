@@ -1,45 +1,25 @@
-{ pkgs ? import <nixpkgs> {}, src ? ./. }:
+{
+  system ? builtins.currentSystem,
+}:
+let
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
 
-pkgs.callPackage (
-  {
-    lib,
-    stdenv,
-    cargo,
-    rustPlatform,
-    openssl,
-    pkg-config,
-    git,
-  }: let
-    inherit (lib) optionalString;
+  root = lock.nodes.${lock.root};
+  inherit (lock.nodes.${root.inputs.flake-compat}.locked)
+    owner
+    repo
+    rev
+    narHash
+    ;
 
-  in
-    stdenv.mkDerivation (self: {
-      pname = "moonzoon";
-      version = "0.1.0"; # Replace with the actual version or use cargoMeta.package.version if available
+  flake-compat = fetchTarball {
+    url = "https://github.com/${owner}/${repo}/archive/${rev}.tar.gz";
+    sha256 = narHash;
+  };
 
-      cargoDeps = rustPlatform.importCargoLock {
-        lockFile = ./Cargo.lock;
-      };
-
-      src = src;
-
-      doCheck = true;
-
-      cargoBuildType = "release";
-
-      cargoBuildFlags = ["-p" "mzoon"];
-
-      nativeBuildInputs = [
-        cargo
-        git
-        openssl
-        pkg-config
-      ];
-
-      buildInputs = [
-        rustPlatform.cargoBuildHook
-        rustPlatform.cargoInstallHook
-        rustPlatform.cargoSetupHook
-      ];
-    })
-) {}
+  flake = import flake-compat {
+    inherit system;
+    src = ./.;
+  };
+in
+flake.defaultNix

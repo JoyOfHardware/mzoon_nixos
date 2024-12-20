@@ -1,22 +1,25 @@
-{ pkgs ? import <nixpkgs> {} }:
-
+{
+  system ? builtins.currentSystem,
+}:
 let
-  rustOverlay = import (builtins.fetchTarball {
-    url = "https://github.com/oxalica/rust-overlay/archive/refs/heads/master.tar.gz";
-  });
-  overlayedPkgs = import pkgs.path {
-    overlays = [ rustOverlay ];
-  };
-  rustNightlyVersion = "2024-03-04"; # Replace with the desired nightly version
-in
-overlayedPkgs.mkShell {
-  buildInputs = [
-    overlayedPkgs.rust-bin.nightly."${rustNightlyVersion}".default
-    pkgs.wasm-bindgen-cli
-    pkgs.binaryen
-  ];
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
 
-  shellHook = ''
-    echo "Cargo nightly environment ready (version ${rustNightlyVersion})."
-  '';
-}
+  root = lock.nodes.${lock.root};
+  inherit (lock.nodes.${root.inputs.flake-compat}.locked)
+    owner
+    repo
+    rev
+    narHash
+    ;
+
+  flake-compat = fetchTarball {
+    url = "https://github.com/${owner}/${repo}/archive/${rev}.tar.gz";
+    sha256 = narHash;
+  };
+
+  flake = import flake-compat {
+    inherit system;
+    src = ./.;
+  };
+in
+flake.shellNix
